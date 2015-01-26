@@ -1,0 +1,6 @@
+D:\GitHub\TKS.ORMLite\TKS.ORMLite\bin\Debug\TKS.ORMLite.xml
+D:\GitHub\TKS.ORMLite\TKS.ORMLite\bin\Debug\TKS.ORMLite.dll
+D:\GitHub\TKS.ORMLite\TKS.ORMLite\bin\Debug\TKS.ORMLite.pdb
+D:\GitHub\TKS.ORMLite\TKS.ORMLite\obj\x86\Debug\TKS.ORMLite.csprojResolveAssemblyReference.cache
+D:\GitHub\TKS.ORMLite\TKS.ORMLite\obj\x86\Debug\TKS.ORMLite.dll
+D:\GitHub\TKS.ORMLite\TKS.ORMLite\obj\x86\Debug\TKS.ORMLite.pdb

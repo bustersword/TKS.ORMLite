@@ -517,7 +517,7 @@
             this.TriggerBeforeExecute();
             try
             {
-                result = ToJson(this.Command.ExecuteReader(CommandBehavior.SingleRow));
+                result = ToJson(this.Command.ExecuteReader());
             }
             catch (Exception ex)
             {
@@ -860,7 +860,7 @@
 
         #region WriteExtension
 
-      
+
         /// <summary>
         ///   插入一行数据 E.g
         /// <para>db.Insert(new Person { FirstName = "Jimi", Age = 27 })</para>
@@ -898,7 +898,7 @@
 
                 Command.CommandText = sql;
 
-                res=  ExecuteNonQuery();
+                res = ExecuteNonQuery();
 
 
             }
@@ -948,7 +948,7 @@
 
         /// <summary>
         /// 删除一或者多行数据，使用匿名类属性的值作为筛选条件  E.g:
-        /// <para>db.Delete(new Person { FirstName = "Jimi", Age = 27 })</para>
+        /// <para>db.Delete(new { FirstName = "Jimi", Age = 27 })</para>
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="anonType"></param>
@@ -1017,6 +1017,43 @@
             return res;
         }
 
+        /// <summary>
+        /// 更新一或者多行数据,使用匿名类属性的值作为筛选条件  E.g:
+        /// <para>db.Update(new { FirstName = "Jimi", Age = 27 })</para>
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="obj"></param>
+        /// <param name="anonType"></param>
+        /// <param name="updateAllFields"></param>
+        /// <returns></returns>
+        public int Update<T>(T obj, object anonType, bool updateAllFields = false)
+        {
+            Type entityType = typeof(T);
+            EntityHelper.EnsureIsDataItemType(entityType);
+            int res = 0;
+            this.TriggerBeforeExecute();
+            try
+            {
+                EntityHelper.SqlStatement _description = EntityHelper.GetUpdateStatement<T>(entityType, obj, anonType, updateAllFields);
+                GetCommand();
+                this.Command.CommandText = _description.Sql;
+                foreach (var item in _description.Parameters)
+                {
+                    AddInParameter(item.Parameter, item.Value);
+                }
+                res = ExecuteNonQuery();
+
+            }
+            catch (Exception ex)
+            {
+                this.ProcessException(new ExecuteLogEventArgs("Update<" + typeof(T).Name + ">", this.Command.CommandText, ex));
+            }
+
+            this.TriggerAfterExecute();
+
+            return res;
+        }
+
         #endregion
 
         #region ReadExtension
@@ -1028,11 +1065,11 @@
         /// <typeparam name="T"></typeparam>
         /// <param name="obj"></param>
         /// <returns>集合</returns>
-        public List<T> Select<T>(T obj)where T:class,new()
+        public List<T> Select<T>(T obj) where T : class,new()
         {
             Type entityType = typeof(T);
             EntityHelper.EnsureIsDataItemType(entityType);
-            List<T> res=new List<T>();
+            List<T> res = new List<T>();
             this.TriggerBeforeExecute();
             try
             {
@@ -1053,6 +1090,17 @@
             this.TriggerAfterExecute();
 
             return res;
+        }
+
+        /// <summary>
+        /// 查询一行或者多行数据，无筛选条件  E.g:
+        /// <para>db.Select()</para>
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <returns>集合</returns>
+        public List<T> Select<T>() where T : class,new()
+        {
+            return Select<T>(null);
         }
 
         #endregion

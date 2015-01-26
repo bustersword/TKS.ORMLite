@@ -80,7 +80,7 @@ namespace TKS.ORMLite
             {
                 if (loadAllField)
                 {
-                    if (num != userData.EntityDescription .LoadALLValues_ExpectSuccessCount)
+                    if (num != userData.EntityDescription.LoadALLValues_ExpectSuccessCount)
                     {
                         throw new LoadMemberFailedException(itemType, fieldNames);
                     }
@@ -99,7 +99,7 @@ namespace TKS.ORMLite
         /// </summary>
         /// <param name="itemType">要加载的类型</param>
         /// <returns></returns>
-        internal static EntityDescription  GetItemDescription(Type itemType)
+        internal static EntityDescription GetItemDescription(Type itemType)
         {
             if (itemType == null)
             {
@@ -132,7 +132,7 @@ namespace TKS.ORMLite
             }
             int loadPart = 0;
             int loadAll = 0;
-            EntityDescription  description = new EntityDescription(itemType, memberCapacity);
+            EntityDescription description = new EntityDescription(itemType, memberCapacity);
             foreach (MemberInfo _memberInfo in members)
             {
                 if ((_memberInfo.MemberType == MemberTypes.Field) || (_memberInfo.MemberType == MemberTypes.Property))
@@ -141,7 +141,7 @@ namespace TKS.ORMLite
                     memberDescription.MemberInfo = _memberInfo;
                     ItemFieldAttribute itemAttr = null;
                     //获取一个属性或者字段,获取该字段或者属性的附加属性，如果没有则new一个
-                    object[] customAttributes =  _memberInfo.GetCustomAttributes(false);
+                    object[] customAttributes = _memberInfo.GetCustomAttributes(false);
                     for (int i = 0; i < customAttributes.Length; i++)
                     {
                         if (customAttributes[i].GetType() == TypeList._ItemFieldAttribute)
@@ -170,7 +170,7 @@ namespace TKS.ORMLite
                             loadAll++;
                         }
                     }
-                  
+
                     description.Dict[_memberInfo.Name] = memberDescription;
                 }
             }
@@ -178,7 +178,7 @@ namespace TKS.ORMLite
             return description;
         }
 
-        private static void HandleItemFieldAttribute(MemberInfo info2,ref ItemFieldAttribute attr)
+        private static void HandleItemFieldAttribute(MemberInfo info2, ref ItemFieldAttribute attr)
         {
             //判断该成员是否加载
             if ((!attr.IgnoreLoad && (info2.MemberType == MemberTypes.Property)) && !((PropertyInfo)info2).CanWrite)
@@ -219,7 +219,7 @@ namespace TKS.ORMLite
         /// <returns></returns>
         internal static bool IsEnumerableType(Type testType)
         {
-            if (testType == TypeList._string||testType==TypeList._byteArray  )
+            if (testType == TypeList._string || testType == TypeList._byteArray)
             {
                 return false;
             }
@@ -257,7 +257,7 @@ namespace TKS.ORMLite
         /// <param name="info"></param>
         /// <param name="prefix"></param>
         /// <returns></returns>
-        private static bool TrySetDataItemMemberValue(CommonDataAdapter  row, object item, EntityMemberDescription info, string prefix)
+        private static bool TrySetDataItemMemberValue(CommonDataAdapter row, object item, EntityMemberDescription info, string prefix)
         {
             string[] columnNames = ((LatestLoadDataItemInfo)row.UserData).ColumnNames;
             string str = prefix + info.MemberAttr.DbFieldName;
@@ -335,12 +335,12 @@ namespace TKS.ORMLite
         internal static List<ParameterValue> GetInsertDescription<T>(Type itemType, T obj)
         {
             List<ParameterValue> parameterValue = new List<ParameterValue>();
-            EntityDescription description=  GetItemDescription(itemType);
-            foreach (var item in description.Dict )
+            EntityDescription description = GetItemDescription(itemType);
+            foreach (var item in description.Dict)
             {
                 string name = item.Key;
-                var value= description.Dict[name].GetValue(obj);
-                parameterValue.Add(new ParameterValue { Parameter=name ,Value =value  });
+                var value = description.Dict[name].GetValue(obj);
+                parameterValue.Add(new ParameterValue { Parameter = name, Value = value });
             }
             return parameterValue;
         }
@@ -356,87 +356,90 @@ namespace TKS.ORMLite
             string updateSql = "update {0} set {1} {2}";
             EntityDescription description = GetItemDescription(itemType);
             StringBuilder sql = new StringBuilder();
-            StringBuilder sqlFilter=new StringBuilder();
+            StringBuilder sqlFilter = new StringBuilder();
             List<ParameterValue> paras = new List<ParameterValue>();
             foreach (var item in description.Dict)
             {
-                string name=item.Key ;
-                var value=description.Dict[item.Key].GetValue(obj);
+                string name = item.Key;
+                var value = description.Dict[item.Key].GetValue(obj);
                 if (item.Value.IsPK)
                 {
                     if (sqlFilter.Length > 0)
                         sqlFilter.Append(" AND ");
-                    sqlFilter.Append(name) 
-                     .Append("=@") 
+                    sqlFilter.Append(name)
+                     .Append("=@")
                      .Append(name);
                 }
                 else
                 {
-                    if (updateAllFields||(!updateAllFields && value!=null ))
+                    if (updateAllFields || (!updateAllFields && value != null))
                     {
                         if (sql.Length > 0)
                             sql.Append(",");
                         sql.Append(name).Append("=@").Append(name);
                     }
-                    else if (!updateAllFields && value==null  ) 
+                    else if (!updateAllFields && value == null)
                     {
                         //不更新全部，并且没有值，过滤掉
                         continue;
                     }
 
                 }
-                paras.Add(new ParameterValue { Parameter=name,Value =value });
+                paras.Add(new ParameterValue { Parameter = name, Value = value });
             }
-            updateSql=string.Format (updateSql, itemType.Name,sql.ToString (),
-                sqlFilter.Length>0?" where "+sqlFilter.ToString():"");
-            return new SqlStatement { Sql= updateSql, Parameters=paras};
+            updateSql = string.Format(updateSql, itemType.Name, sql.ToString(),
+                sqlFilter.Length > 0 ? " where " + sqlFilter.ToString() : "");
+            return new SqlStatement { Sql = updateSql, Parameters = paras };
         }
 
-        internal static SqlStatement GetDeleteNonDefultsStatement<T>(Type itemType, T obj)
+        internal static SqlStatement GetUpdateStatement<T>(Type itemType, T obj, object anonType, bool updateAllFields)
         {
-            string deleteSql = "delete from {0} {1}";
+            string updateSql = "update {0} set {1} {2}";
             EntityDescription description = GetItemDescription(itemType);
-            List<ParameterValue> paras = new List<ParameterValue>();
+            StringBuilder sql = new StringBuilder();
             StringBuilder sqlFilter = new StringBuilder();
+            List<ParameterValue> paras = new List<ParameterValue>();
+
+            List<string> parasName = new List<string>();
+
             foreach (var item in description.Dict)
             {
                 string name = item.Key;
                 var value = description.Dict[item.Key].GetValue(obj);
-                var defaultValue=description.Dict[item.Key ].GetDefaultValue();
-                if (value != null&&!value.Equals(defaultValue))
-                {
-                    if (sqlFilter.Length > 0)
-                    {
-                        sqlFilter.Append(" AND ");
-                    }
-                    sqlFilter.Append(name)
-                    .Append("=@")
-                    .Append(name);
 
-                    paras.Add(new ParameterValue { Parameter=name ,Value =value  });
+                if (updateAllFields || (!updateAllFields && value != null))
+                {
+                    if (sql.Length > 0)
+                        sql.Append(",");
+                    sql.Append(name).Append("=@").Append(name);
+                }
+                else if (!updateAllFields && value == null)
+                {
+                    //不更新全部，并且没有值，过滤掉
+                    continue;
+                }
+
+
+                if (!parasName.Contains(name))
+                {
+                    parasName.Add(name);
+                    paras.Add(new ParameterValue { Parameter = name, Value = value });
+                }
+                else
+                {
+                    parasName.Add(name);
                 }
             }
 
-            deleteSql =string.Format(deleteSql ,itemType.Name ,
-                sqlFilter.Length > 0 ? " where " + sqlFilter.ToString() : "");
-            return new SqlStatement { Sql=deleteSql , Parameters=paras };
 
-        }
-
-        internal static SqlStatement GetDeleteStatement(Type itemType, object anonType)
-        {
-            string deleteSql = "delete from {0} {1}";
             Type _anonType = anonType.GetType();
             var pis = _anonType.GetProperties();
-            EntityDescription description = GetItemDescription(itemType);
-            List<ParameterValue> paras = new List<ParameterValue>();
-            StringBuilder sqlFilter = new StringBuilder();
             foreach (var item in pis)
             {
                 var name = item.Name;
                 if (!description.Dict.ContainsKey(name))
                 {
-                    throw new Exception("匿名类中的属性"+name+"不存在于"+itemType.Name);
+                    throw new Exception("匿名类中的属性" + name + "不存在于" + itemType.Name);
                 }
                 var value = item.GetValue(anonType, null);
                 if (sqlFilter.Length > 0)
@@ -447,18 +450,25 @@ namespace TKS.ORMLite
                 .Append("=@")
                 .Append(name);
 
-                paras.Add(new ParameterValue { Parameter = name, Value = value });
+                if (!parasName.Contains(name))
+                {
+                    parasName.Add(name);
+                    paras.Add(new ParameterValue { Parameter = name, Value = value });
+                }
+                else
+                {
+                    parasName.Add(name);
+                }
             }
-            deleteSql = string.Format(deleteSql, itemType.Name,
-            sqlFilter.Length > 0 ? " where " + sqlFilter.ToString() : "");
-            return new SqlStatement { Sql = deleteSql, Parameters = paras };
+            updateSql = string.Format(updateSql, itemType.Name, sql.ToString(),
+                sqlFilter.Length > 0 ? " where " + sqlFilter.ToString() : "");
+            return new SqlStatement { Sql = updateSql, Parameters = paras };
         }
-        #endregion
 
-        #region ReadExtension
-        internal static SqlStatement GetSelectStatement<T>(Type itemType ,T obj)
+
+        internal static SqlStatement GetDeleteNonDefultsStatement<T>(Type itemType, T obj)
         {
-            string selectSql = "select * from {0} {1}";
+            string deleteSql = "delete from {0} {1}";
             EntityDescription description = GetItemDescription(itemType);
             List<ParameterValue> paras = new List<ParameterValue>();
             StringBuilder sqlFilter = new StringBuilder();
@@ -481,6 +491,72 @@ namespace TKS.ORMLite
                 }
             }
 
+            deleteSql = string.Format(deleteSql, itemType.Name,
+                sqlFilter.Length > 0 ? " where " + sqlFilter.ToString() : "");
+            return new SqlStatement { Sql = deleteSql, Parameters = paras };
+
+        }
+
+        internal static SqlStatement GetDeleteStatement(Type itemType, object anonType)
+        {
+            string deleteSql = "delete from {0} {1}";
+            Type _anonType = anonType.GetType();
+            var pis = _anonType.GetProperties();
+            EntityDescription description = GetItemDescription(itemType);
+            List<ParameterValue> paras = new List<ParameterValue>();
+            StringBuilder sqlFilter = new StringBuilder();
+            foreach (var item in pis)
+            {
+                var name = item.Name;
+                if (!description.Dict.ContainsKey(name))
+                {
+                    throw new Exception("匿名类中的属性" + name + "不存在于" + itemType.Name);
+                }
+                var value = item.GetValue(anonType, null);
+                if (sqlFilter.Length > 0)
+                {
+                    sqlFilter.Append(" AND ");
+                }
+                sqlFilter.Append(name)
+                .Append("=@")
+                .Append(name);
+
+                paras.Add(new ParameterValue { Parameter = name, Value = value });
+            }
+            deleteSql = string.Format(deleteSql, itemType.Name,
+            sqlFilter.Length > 0 ? " where " + sqlFilter.ToString() : "");
+            return new SqlStatement { Sql = deleteSql, Parameters = paras };
+        }
+        #endregion
+
+        #region ReadExtension
+        internal static SqlStatement GetSelectStatement<T>(Type itemType, T obj)
+        {
+            string selectSql = "select * from {0} {1}";
+            EntityDescription description = GetItemDescription(itemType);
+            List<ParameterValue> paras = new List<ParameterValue>();
+            StringBuilder sqlFilter = new StringBuilder();
+            if (obj != null)
+            {
+                foreach (var item in description.Dict)
+                {
+                    string name = item.Key;
+                    var value = description.Dict[item.Key].GetValue(obj);
+                    var defaultValue = description.Dict[item.Key].GetDefaultValue();
+                    if (value != null && !value.Equals(defaultValue))
+                    {
+                        if (sqlFilter.Length > 0)
+                        {
+                            sqlFilter.Append(" AND ");
+                        }
+                        sqlFilter.Append(name)
+                        .Append("=@")
+                        .Append(name);
+
+                        paras.Add(new ParameterValue { Parameter = name, Value = value });
+                    }
+                }
+            }
             selectSql = string.Format(selectSql, itemType.Name,
                 sqlFilter.Length > 0 ? " where " + sqlFilter.ToString() : "");
             return new SqlStatement { Sql = selectSql, Parameters = paras };
@@ -575,7 +651,7 @@ namespace TKS.ORMLite
                 LatestLoadDataItemInfo info = new LatestLoadDataItemInfo
                 {
                     ColumnNames = row.GetColumnNames(true),
-                    EntityDescription  = GetItemDescription(item.GetType())
+                    EntityDescription = GetItemDescription(item.GetType())
                 };
                 row.UserData = info;
             }
