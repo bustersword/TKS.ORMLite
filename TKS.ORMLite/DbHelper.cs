@@ -32,7 +32,7 @@
             }
             catch (Exception ex)
             {
-                ProcessInitException(ex.Message);
+                ProcessInitException(DBDSN+">>>"+ex.Message);
             }
         }
 

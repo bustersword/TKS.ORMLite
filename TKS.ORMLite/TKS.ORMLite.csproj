@@ -57,7 +57,7 @@
   <ItemGroup>
     <Compile Include="Driver\OracleDriver.cs" />
     <Compile Include="EntityHelper.cs" />
-    <Compile Include="Interface\PrimaryKeyAttribute.cs" />
+    <Compile Include="Attribute\PrimaryKeyAttribute.cs" />
     <Compile Include="LoadMemberFailedException.cs" />
     <Compile Include="LogForDB.cs" />
     <Compile Include="TypeList.cs" />
@@ -76,7 +76,7 @@
     <Compile Include="ExecuteLogEventArgs.cs" />
     <Compile Include="DbHelper.cs" />
     <Compile Include="Driver\IDriverType.cs" />
-    <Compile Include="Interface\ItemFieldAttribute.cs" />
+    <Compile Include="Attribute\ItemFieldAttribute.cs" />
     <Compile Include="DriverTypeFactory.cs" />
     <Compile Include="Driver\SqlDriver.cs" />
     <Reference Include="System.Web" />
