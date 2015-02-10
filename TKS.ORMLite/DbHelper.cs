@@ -32,7 +32,7 @@
             }
             catch (Exception ex)
             {
-                ProcessInitException(DBDSN+">>>"+ex.Message);
+                ProcessInitException(DBDSN + ">>>" + ex.Message);
             }
         }
 
@@ -57,7 +57,7 @@
             }
             catch (Exception ex)
             {
-                ProcessInitException(ex.Message);
+                ProcessInitException(DBDSN + ">>>" + ex.Message);
             }
         }
 
@@ -373,6 +373,7 @@
         public IDbCommand GetSqlStringCommond(string strSql)
         {
             IDbCommand cmd = Connection.CreateCommand();
+            cmd.CommandTimeout = 60;
             cmd.CommandText = strSql;
             cmd.CommandType = CommandType.Text;
             this.Command = cmd;
@@ -383,6 +384,7 @@
         IDbCommand GetCommand()
         {
             IDbCommand cmd = Connection.CreateCommand();
+            cmd.CommandTimeout = 60;
             cmd.CommandType = CommandType.Text;
             this.Command = cmd;
             SetCommandState();
@@ -397,6 +399,7 @@
         public IDbCommand GetProcedureCommond(string strProcName)
         {
             IDbCommand cmd = Connection.CreateCommand();
+            cmd.CommandTimeout = 60;
             cmd.CommandText = strProcName;
             cmd.CommandType = CommandType.StoredProcedure;
             this.Command = cmd;
@@ -1261,45 +1264,36 @@
             GC.SuppressFinalize(this);
         }
 
-        protected bool disposed = false;
+
 
         protected void CDispose(bool disposing)
         {
-            if (!this.disposed)
+            if (disposing)
             {
-                if (disposing)
+                // Dispose managed resources.
+                if (Connection != null)
                 {
-                    // Dispose managed resources.
-                    if (Connection != null)
+                    if (this.Connection.State != System.Data.ConnectionState.Closed)
                     {
-                        if (this.Connection.State != System.Data.ConnectionState.Closed)
-                        {
-                            this.Connection.Close();
-                        }
-                        this.Connection.Dispose();
-                        this.Connection = null;
+                        this.Connection.Close();
                     }
-                    if (Command != null)
-                    {
-                        Command.Dispose();
-                    }
-                    if (Transaction != null)
-                    {
-                        Transaction.Dispose();
-                    }
+                    this.Connection.Dispose();
+                    this.Connection = null;
                 }
-
+                if (Command != null)
+                {
+                    Command.Dispose();
+                }
+                if (Transaction != null)
+                {
+                    Transaction.Dispose();
+                }
             }
-            disposed = true;
+
+
         }
 
-        /// <summary>
-        ///     释放当前对象资源
-        /// </summary>
-        ~DBHelper()
-        {
-            CDispose(false);
-        }
+
 
         #endregion
     }
