@@ -38,5 +38,10 @@ namespace TKS.ORMLite.Attrs
         ///     在加载时，如果找不到相应的匹配数据来源，对于“字符串”类型来说，就设置为 String.Empty ，此设置对于从数据库加载时无效。
         /// </summary>
         public bool SetEmptyIfNotFoundOnLoad;
+
+        /// <summary>
+        ///    插入时，指示是否有默认值，如果有，则该字段不生成插入语句
+        /// </summary>
+        public bool HasDefault;
     }
 }

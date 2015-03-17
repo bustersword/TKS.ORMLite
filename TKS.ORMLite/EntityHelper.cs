@@ -339,6 +339,11 @@ namespace TKS.ORMLite
             foreach (var item in description.Dict)
             {
                 string name = item.Key;
+                EntityMemberDescription memberDescription = description.Dict[name];
+                //数据库是否有默认值
+                if (memberDescription.MemberAttr.HasDefault)
+                    continue;
+
                 var value = description.Dict[name].GetValue(obj);
                 parameterValue.Add(new ParameterValue { Parameter = name, Value = value });
             }
@@ -362,6 +367,7 @@ namespace TKS.ORMLite
             {
                 string name = item.Key;
                 var value = description.Dict[item.Key].GetValue(obj);
+                var defaultValue = description.Dict[item.Key].GetDefaultValue();
                 if (item.Value.IsPK)
                 {
                     if (sqlFilter.Length > 0)
@@ -372,13 +378,13 @@ namespace TKS.ORMLite
                 }
                 else
                 {
-                    if (updateAllFields || (!updateAllFields && value != null))
+                    if (updateAllFields || (!updateAllFields && value != null && !value.Equals(defaultValue)))
                     {
                         if (sql.Length > 0)
                             sql.Append(",");
                         sql.Append(name).Append("=@").Append(name);
                     }
-                    else if (!updateAllFields && value == null)
+                    else if (!updateAllFields && (value == null || value.Equals(defaultValue)))
                     {
                         //不更新全部，并且没有值，过滤掉
                         continue;
@@ -406,29 +412,33 @@ namespace TKS.ORMLite
             {
                 string name = item.Key;
                 var value = description.Dict[item.Key].GetValue(obj);
+                var defaultValue = description.Dict[item.Key].GetDefaultValue();
 
-                if (updateAllFields || (!updateAllFields && value != null))
+                if (updateAllFields || value != null)
                 {
-                    if (sql.Length > 0)
-                        sql.Append(",");
-                    sql.Append(name).Append("=@").Append(name);
+                    if (!value.Equals(defaultValue))
+                    {
+                        if (sql.Length > 0)
+
+                            sql.Append(",");
+                        sql.Append(name).Append("=@").Append(name);
+                        if (!parasName.Contains(name))
+                        {
+                            parasName.Add(name);
+                            paras.Add(new ParameterValue { Parameter = name, Value = value });
+                        }
+                        else
+                        {
+                            parasName.Add(name);
+                        }
+                    }
                 }
-                else if (!updateAllFields && value == null)
+                else if (!updateAllFields && (value == null || value.Equals(defaultValue)))
                 {
                     //不更新全部，并且没有值，过滤掉
                     continue;
                 }
 
-
-                if (!parasName.Contains(name))
-                {
-                    parasName.Add(name);
-                    paras.Add(new ParameterValue { Parameter = name, Value = value });
-                }
-                else
-                {
-                    parasName.Add(name);
-                }
             }
 
 
@@ -442,23 +452,30 @@ namespace TKS.ORMLite
                     throw new Exception("匿名类中的属性" + name + "不存在于" + itemType.Name);
                 }
                 var value = item.GetValue(anonType, null);
-                if (sqlFilter.Length > 0)
-                {
-                    sqlFilter.Append(" AND ");
-                }
-                sqlFilter.Append(name)
-                .Append("=@")
-                .Append(name);
+                 var defaultValue = description.Dict[name].GetDefaultValue();
 
-                if (!parasName.Contains(name))
-                {
-                    parasName.Add(name);
-                    paras.Add(new ParameterValue { Parameter = name, Value = value });
-                }
-                else
-                {
-                    parasName.Add(name);
-                }
+                 if (value != null && !value.Equals(defaultValue))
+                 {
+                     if (sqlFilter.Length > 0)
+                     {
+                         sqlFilter.Append(" AND ");
+                     }
+
+                     sqlFilter.Append(name)
+                     .Append("=@")
+                     .Append(name);
+
+                     if (!parasName.Contains(name))
+                     {
+
+                         parasName.Add(name);
+                         paras.Add(new ParameterValue { Parameter = name, Value = value });
+                     }
+                     else
+                     {
+                         parasName.Add(name);
+                     }
+                 }
             }
             updateSql = string.Format(updateSql, itemType.Name, sql.ToString(),
                 sqlFilter.Length > 0 ? " where " + sqlFilter.ToString() : "");
